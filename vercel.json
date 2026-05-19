@@ -1,16 +1,19 @@
 {
   "version": 2,
   "name": "icf-lm",
-  "buildCommand": null,
-  "outputDirectory": "public",
-  "routes": [
+  "cleanUrls": true,
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "source": "/",
+      "destination": "/icf-sllm-app.html"
     },
     {
-      "src": "/(.*)",
-      "dest": "/public/$1"
+      "source": "/icf-lm",
+      "destination": "/icf-sllm-app.html"
+    },
+    {
+      "source": "/pbs-peo-assessment",
+      "destination": "/pbs-peo-assessment.html"
     }
   ],
   "headers": [

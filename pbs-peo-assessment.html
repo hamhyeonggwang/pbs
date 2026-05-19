@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBS 초기 평가 — PEO 환경 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal-50: #e0f7f2;
+    --teal-100: #a7edd9;
+    --teal-400: #1DAE82;
+    --teal-600: #0d7a5a;
+    --teal-800: #054d38;
+    --amber-50: #fff8ec;
+    --amber-100: #ffe3a3;
+    --amber-400: #f5a623;
+    --amber-600: #c47d0a;
+    --coral-50: #fff1ed;
+    --coral-400: #e06040;
+    --coral-600: #b84020;
+    --purple-50: #f2f0ff;
+    --purple-400: #7B6FDD;
+    --purple-600: #4e42b0;
+    --gray-50: #f8f7f4;
+    --gray-100: #efefea;
+    --gray-200: #e0dfd8;
+    --gray-400: #9a9890;
+    --gray-600: #5a5956;
+    --gray-800: #2e2d2a;
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text-primary: #1c1b18;
+    --text-secondary: #5a5956;
+    --text-muted: #9a9890;
+    --font-ui: 'Pretendard', sans-serif;
+    --font-body: 'Noto Sans KR', sans-serif;
+    --font-headline: 'Noto Serif KR', serif;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  /* ── TOP NAV ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .logo-badge {
+    background: var(--teal-400);
+    color: #fff;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+  }
+  .topbar-title {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .tab-btn {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    transition: all 0.18s;
+  }
+  .tab-btn:hover { background: var(--gray-100); color: var(--text-primary); }
+  .tab-btn.active {
+    background: var(--teal-50);
+    color: var(--teal-600);
+    font-weight: 600;
+  }
+  .save-btn {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--teal-400);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    transition: background 0.18s;
+  }
+  .save-btn:hover { background: var(--teal-600); }
+
+  /* ── LAYOUT ── */
+  .main-wrap {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    position: sticky;
+    top: 56px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+  }
+  .sidebar-section-label {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 12px 20px 6px;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover { background: var(--gray-50); color: var(--text-primary); }
+  .sidebar-item.active {
+    background: var(--teal-50);
+    color: var(--teal-600);
+    border-left-color: var(--teal-400);
+    font-weight: 600;
+  }
+  .sidebar-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    flex-shrink: 0;
+  }
+  .sidebar-dot.done { background: var(--teal-400); }
+  .sidebar-dot.partial { background: var(--amber-400); }
+
+  /* ── CONTENT AREA ── */
+  .content {
+    padding: 28px 36px;
+    max-width: 860px;
+  }
+
+  /* ── PAGE ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { margin-bottom: 28px; }
+  .page-eyebrow {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-400);
+    margin-bottom: 6px;
+  }
+  .page-title {
+    font-family: var(--font-headline);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .page-desc {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .card-icon {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .icon-person { background: var(--purple-50); color: var(--purple-600); }
+  .icon-env { background: var(--teal-50); color: var(--teal-600); }
+  .icon-occ { background: var(--amber-50); color: var(--amber-600); }
+  .icon-fit { background: var(--coral-50); color: var(--coral-600); }
+  .icon-obs { background: var(--gray-100); color: var(--gray-600); }
+
+  .card-title {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .card-subtitle {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .field-row.triple {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .field-row.full {
+    grid-template-columns: 1fr;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  label {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+  }
+  input[type="text"], input[type="date"], input[type="number"], select, textarea {
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    color: var(--text-primary);
+    background: var(--gray-50);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 8px 11px;
+    width: 100%;
+    transition: border-color 0.15s, background 0.15s;
+    outline: none;
+    resize: vertical;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--teal-400);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(29,174,130,0.12);
+  }
+  textarea { min-height: 72px; }
+  textarea.tall { min-height: 100px; }
+
+  /* ── RATING SCALE ── */
+  .rating-group { margin-bottom: 12px; }
+  .rating-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .rating-label {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .rating-value {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--teal-600);
+    min-width: 24px;
+    text-align: right;
+  }
+  .rating-track {
+    display: flex;
+    gap: 4px;
+  }
+  .rating-btn {
+    flex: 1;
+    height: 28px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--gray-50);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    position: relative;
+  }
+  .rating-btn:hover { border-color: var(--teal-400); color: var(--teal-600); }
+  .rating-btn.sel-1 { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+  .rating-btn.sel-2 { background: #ffedd5; border-color: #f97316; color: #c2410c; }
+  .rating-btn.sel-3 { background: #fef9c3; border-color: #eab308; color: #a16207; }
+  .rating-btn.sel-4 { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+  .rating-btn.sel-5 { background: #d1fae5; border-color: #10b981; color: #047857; }
+  .rating-desc {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* ── CHECKLIST ── */
+  .check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--gray-50);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-ui);
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    user-select: none;
+  }
+  .check-item:hover { border-color: var(--teal-400); background: var(--teal-50); }
+  .check-item.checked {
+    background: var(--teal-50);
+    border-color: var(--teal-400);
+    color: var(--teal-600);
+    font-weight: 600;
+  }
+  .check-item input[type="checkbox"] { display: none; }
+  .check-icon {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    font-size: 10px;
+  }
+  .check-item.checked .check-icon {
+    background: var(--teal-400);
+    border-color: var(--teal-400);
+    color: #fff;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+  .section-sub-title {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  /* ── PEO FIT MATRIX ── */
+  .peo-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .peo-card {
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    border: 1px solid transparent;
+  }
+  .peo-card.person { background: var(--purple-50); border-color: rgba(123,111,221,0.25); }
+  .peo-card.env { background: var(--teal-50); border-color: rgba(29,174,130,0.25); }
+  .peo-card.occ { background: var(--amber-50); border-color: rgba(245,166,35,0.25); }
+  .peo-card-label {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .peo-card.person .peo-card-label { color: var(--purple-600); }
+  .peo-card.env .peo-card-label { color: var(--teal-600); }
+  .peo-card.occ .peo-card-label { color: var(--amber-600); }
+  .peo-card-value {
+    font-family: var(--font-headline);
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .peo-card.person .peo-card-value { color: var(--purple-600); }
+  .peo-card.env .peo-card-value { color: var(--teal-600); }
+  .peo-card.occ .peo-card-value { color: var(--amber-600); }
+  .peo-card-desc {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ── FIT INDICATOR ── */
+  .fit-bar-wrap { margin-bottom: 16px; }
+  .fit-bar-label-row {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-ui); font-size: 12px; margin-bottom: 6px;
+  }
+  .fit-bar-track {
+    height: 10px;
+    background: var(--gray-100);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .fit-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #ef4444 0%, #f97316 25%, #eab308 50%, #22c55e 75%, #10b981 100%);
+    transition: width 0.5s ease;
+  }
+
+  /* ── NARRATIVE BOX ── */
+  .narrative-box {
+    background: var(--gray-50);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal-400);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    font-style: italic;
+    min-height: 60px;
+  }
+
+  /* ── TAG PILLS ── */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tag {
+    font-family: var(--font-ui);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid transparent;
+  }
+  .tag-concern { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+  .tag-strength { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+  .tag-neutral { background: var(--gray-100); color: var(--gray-600); border-color: var(--gray-200); }
+
+  /* ── PRIORITY TABLE ── */
+  .priority-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  .priority-table th {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--gray-50);
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .priority-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .priority-table tr:last-child td { border-bottom: none; }
+  .priority-table tr:hover td { background: var(--gray-50); }
+
+  /* ── PROGRESS INDICATOR ── */
+  .progress-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 0 20px;
+    margin-bottom: 4px;
+  }
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .progress-step.active { color: var(--teal-600); font-weight: 600; }
+  .progress-step.done { color: var(--gray-400); }
+  .progress-circle {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    border: 1.5px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .progress-step.active .progress-circle {
+    background: var(--teal-400); border-color: var(--teal-400); color: #fff;
+  }
+  .progress-step.done .progress-circle {
+    background: var(--gray-100); border-color: var(--gray-200); color: var(--gray-400);
+  }
+  .progress-line {
+    flex: 1; height: 1px; background: var(--border); max-width: 40px;
+  }
+
+  /* ── ACTION BUTTONS ── */
+  .action-row {
+    display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;
+  }
+  .btn-secondary {
+    font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+    background: none; border: 1px solid var(--border-strong);
+    color: var(--text-secondary); padding: 8px 18px;
+    border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--gray-50); }
+  .btn-primary {
+    font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+    background: var(--teal-400); border: none;
+    color: #fff; padding: 8px 20px;
+    border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--teal-600); }
+
+  /* ── INFO CALLOUT ── */
+  .callout {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--teal-50); border: 1px solid rgba(29,174,130,0.2);
+    border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 16px;
+    font-size: 13px; color: var(--teal-800);
+  }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .callout strong { font-weight: 700; }
+
+  /* ── SUMMARY PANEL ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .summary-stat {
+    background: var(--gray-50);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+  .summary-stat-label {
+    font-family: var(--font-ui); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .summary-stat-value {
+    font-family: var(--font-headline); font-size: 20px; font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    .topbar, .sidebar { display: none; }
+    .main-wrap { grid-template-columns: 1fr; }
+    .content { padding: 20px; max-width: 100%; }
+    .page { display: block !important; page-break-inside: avoid; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="logo-badge">PBS</span>
+    <span class="topbar-title">긍정적 행동지원 — PEO 초기 평가</span>
+  </div>
+  <div class="topbar-right">
+    <button class="tab-btn active" onclick="switchPage('client', this)">기초 정보</button>
+    <button class="tab-btn" onclick="switchPage('environment', this)">환경 분석</button>
+    <button class="tab-btn" onclick="switchPage('occupation', this)">작업 분석</button>
+    <button class="tab-btn" onclick="switchPage('fit', this)">PEO 적합성</button>
+    <button class="tab-btn" onclick="switchPage('summary', this)">분석 요약</button>
+    <button class="save-btn" id="sheets-btn" onclick="syncToSheets()" title="구글 시트에 저장">📊 시트 저장</button>
+    <button class="save-btn" style="background:var(--gray-600);" onclick="saveData()" title="JSON 로컬 저장">💾 JSON</button>
+  </div>
+</header>
+
+<!-- GAS 연동 설정 패널 -->
+<div id="gas-panel" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:999; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:16px; padding:28px 32px; width:520px; max-width:94vw; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <div>
+        <div style="font-family:var(--font-ui);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-400);margin-bottom:4px;">GAS 연동 설정</div>
+        <div style="font-family:var(--font-headline);font-size:18px;font-weight:600;">구글 시트 연결</div>
+      </div>
+      <button onclick="closeGasPanel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+    </div>
+    <div style="background:var(--teal-50);border:1px solid rgba(29,174,130,.2);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--teal-800);margin-bottom:18px;line-height:1.7;">
+      <strong>설치 순서</strong><br>
+      1. GAS_PBS_PEO.js 파일을 구글 시트의 Apps Script에 붙여넣기<br>
+      2. 배포 → 새 배포 → 웹 앱 → 모든 사용자 허용<br>
+      3. 생성된 웹 앱 URL을 아래에 입력
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">GAS 웹 앱 URL</label>
+      <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec"
+        style="width:100%;font-size:13px;padding:9px 12px;border:1px solid var(--border-strong);border-radius:6px;background:var(--gray-50);">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="testGasConnection()" style="font-family:var(--font-ui);font-size:13px;font-weight:600;background:none;border:1px solid var(--border-strong);color:var(--text-secondary);padding:8px 16px;border-radius:6px;cursor:pointer;">연결 테스트</button>
+      <button onclick="saveGasUrl()" style="font-family:var(--font-ui);font-size:13px;font-weight:600;background:var(--teal-400);border:none;color:#fff;padding:8px 20px;border-radius:6px;cursor:pointer;">저장 후 닫기</button>
+    </div>
+    <div id="gas-test-result" style="margin-top:12px;font-size:12.5px;font-family:var(--font-ui);"></div>
+  </div>
+</div>
+
+<!-- 저장 결과 토스트 -->
+<div id="toast" style="display:none;position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--teal-800);color:#fff;font-family:var(--font-ui);font-size:13px;font-weight:600;padding:12px 20px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:opacity 0.3s;"></div>
+
+<div class="main-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section-label">평가 단계</div>
+    <div class="sidebar-item active" onclick="switchPageSide('client', this)">
+      <span class="sidebar-dot" id="dot-client"></span> 아동 기초 정보
+    </div>
+    <div class="sidebar-item" onclick="switchPageSide('environment', this)">
+      <span class="sidebar-dot" id="dot-env"></span> 환경 요인 분석
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:8px;">환경 하위 영역</div>
+    <div class="sidebar-item" style="padding-left:32px; font-size:12px;" onclick="switchPageSide('environment', this)">
+      <span class="sidebar-dot" id="dot-physical"></span> 물리적 환경
+    </div>
+    <div class="sidebar-item" style="padding-left:32px; font-size:12px;" onclick="switchPageSide('environment', this)">
+      <span class="sidebar-dot" id="dot-social"></span> 사회적 환경
+    </div>
+    <div class="sidebar-item" style="padding-left:32px; font-size:12px;" onclick="switchPageSide('environment', this)">
+      <span class="sidebar-dot" id="dot-cultural"></span> 제도·문화 환경
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:8px;">분석</div>
+    <div class="sidebar-item" onclick="switchPageSide('occupation', this)">
+      <span class="sidebar-dot" id="dot-occ"></span> 작업 프로파일
+    </div>
+    <div class="sidebar-item" onclick="switchPageSide('fit', this)">
+      <span class="sidebar-dot" id="dot-fit"></span> PEO 적합성 평가
+    </div>
+    <div class="sidebar-item" onclick="switchPageSide('summary', this)">
+      <span class="sidebar-dot" id="dot-summary"></span> 분석 요약 및 제언
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:8px;">시트 연동</div>
+    <div class="sidebar-item" onclick="openGasPanel()">
+      <span class="sidebar-dot" id="dot-gas" style="background:var(--amber-400)"></span> GAS URL 설정
+    </div>
+    <div class="sidebar-item" onclick="showLoadPanel()">
+      <span class="sidebar-dot"></span> 기존 기록 불러오기
+    </div>
+    <div class="sidebar-section-label" style="margin-top:8px;">양식</div>
+    <div class="sidebar-item" onclick="window.print()">
+      <span class="sidebar-dot"></span> 인쇄 / PDF 출력
+    </div>
+  </aside>
+
+  <!-- 불러오기 패널 -->
+  <div id="load-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;width:460px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <div style="font-family:var(--font-headline);font-size:18px;font-weight:600;">기존 기록 불러오기</div>
+        <button onclick="closeLoadPanel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted);">✕</button>
+      </div>
+      <div id="load-records-list" style="max-height:280px;overflow-y:auto;margin-bottom:16px;font-size:13px;font-family:var(--font-ui);">
+        <div style="color:var(--text-muted);text-align:center;padding:20px;">불러오는 중...</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-ui);">※ GAS URL이 설정된 경우에만 목록이 표시됩니다.</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- ══ PAGE 1: 기초 정보 ══ -->
+    <div class="page active" id="page-client">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 1 · Person</div>
+        <h1 class="page-title">아동 기초 정보 수집</h1>
+        <p class="page-desc">OTIPM의 'Gather Initial Information' 단계에 해당합니다. 아동의 주요 작업 맥락과 의뢰 사유를 파악합니다.</p>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <span><strong>PEO 관점:</strong> Person 요소 — 아동의 발달적 특성, 진단, 선호, 강점/약점을 파악하여 이후 환경 분석의 기준점으로 활용합니다.</span>
+      </div>
+
+      <!-- 인적 사항 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-person">👤</div>
+          <div>
+            <div class="card-title">기본 인적 사항</div>
+            <div class="card-subtitle">Person component</div>
+          </div>
+        </div>
+        <div class="field-row triple">
+          <div class="field-group">
+            <label>아동 이름 (이니셜)</label>
+            <input type="text" id="child-name" placeholder="예: 김○○">
+          </div>
+          <div class="field-group">
+            <label>생년월일</label>
+            <input type="date" id="child-dob">
+          </div>
+          <div class="field-group">
+            <label>학년/학교급</label>
+            <select id="child-grade">
+              <option value="">선택</option>
+              <option>유치원</option>
+              <option>초등 1학년</option>
+              <option>초등 2학년</option>
+              <option>초등 3학년</option>
+              <option>초등 4학년</option>
+              <option>초등 5학년</option>
+              <option>초등 6학년</option>
+              <option>중학교</option>
+              <option>고등학교</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>특수교육 배치 유형</label>
+            <select id="placement">
+              <option value="">선택</option>
+              <option>일반학급 완전통합</option>
+              <option>일반학급 + 특수학급 일부</option>
+              <option>특수학급 주 배치</option>
+              <option>특수학교</option>
+              <option>장애아 전문어린이집</option>
+              <option>기타</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>평가일</label>
+            <input type="date" id="eval-date">
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>진단명 (있는 경우)</label>
+            <input type="text" id="diagnosis" placeholder="예: ASD, CP, ID, ADHD 등">
+          </div>
+        </div>
+      </div>
+
+      <!-- 의뢰 사유 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-obs">📋</div>
+          <div>
+            <div class="card-title">의뢰 사유 및 주 호소</div>
+            <div class="card-subtitle">Referral reason · 주요 행동 관심사</div>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>의뢰 배경 (교사/보호자 보고)</label>
+            <textarea class="tall" id="referral-bg" placeholder="어떤 상황에서 행동 문제가 주로 발생하는지, 누가 의뢰했는지 기술합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>주요 도전 행동 기술</label>
+            <textarea id="target-behavior" placeholder="예: 전환 활동 시 소리지르기, 자리 이탈, 자해 등 구체적으로 기술합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>행동 발생 주요 시간대</label>
+            <input type="text" id="behavior-time" placeholder="예: 오전 1교시, 점심시간, 전환 시">
+          </div>
+          <div class="field-group">
+            <label>행동 발생 주요 장소</label>
+            <input type="text" id="behavior-place" placeholder="예: 일반학급, 복도, 급식실">
+          </div>
+        </div>
+      </div>
+
+      <!-- 강점 및 보호 요인 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-person">⭐</div>
+          <div>
+            <div class="card-title">강점 및 보호 요인</div>
+            <div class="card-subtitle">Person strengths — PBS의 긍정적 기반</div>
+          </div>
+        </div>
+        <div class="section-sub-title">아동의 강점 영역 (해당되는 항목 선택)</div>
+        <div class="check-grid" id="strengths-grid">
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>언어 이해력</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>시각적 처리</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>특정 주제 흥미</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>일과 예측 능력</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>운동 기능</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>또래 관계</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>성인 신뢰 관계</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>음악/예술 반응</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>일상생활 자립</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>정서 조절 시도</label>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>강점 및 선호 활동 (자유 기술)</label>
+            <textarea id="strengths-note" placeholder="아동이 잘하고 좋아하는 것, 동기 유발이 되는 요소를 기술합니다."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-primary" onclick="switchPage('environment', document.querySelectorAll('.tab-btn')[1])">다음: 환경 분석 →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 2: 환경 분석 ══ -->
+    <div class="page" id="page-environment">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 2 · Environment</div>
+        <h1 class="page-title">학교 환경 요인 분석</h1>
+        <p class="page-desc">PEO 모델의 Environment 요소 — 물리적, 사회적, 제도·문화적 환경이 아동의 행동에 미치는 영향을 현장 관찰과 인터뷰를 통해 분석합니다.</p>
+      </div>
+
+      <!-- 물리적 환경 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-env">🏫</div>
+          <div>
+            <div class="card-title">물리적 환경 (Physical Environment)</div>
+            <div class="card-subtitle">공간 구조, 감각 특성, 이동 동선</div>
+          </div>
+        </div>
+
+        <div class="section-sub-title">주요 환경 특성 체크 (현장 관찰)</div>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>소음 수준 높음</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>조명 강도 불일치</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>좁은 이동 동선</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>전환 공간 불명확</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>감각 자극 과부하</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>대기 공간 부재</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>시각적 일정 없음</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>착석 환경 부적합</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>도구 접근성 낮음</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>진정 공간 없음</label>
+        </div>
+
+        <hr class="section-divider">
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">물리적 환경의 행동 촉진 정도</span>
+            <span class="rating-value" id="phys-val">-</span>
+          </div>
+          <div class="rating-track" id="phys-rating">
+            <button class="rating-btn" onclick="setRating('phys', 1, this)">1<br><span style="font-size:9px">매우 방해</span></button>
+            <button class="rating-btn" onclick="setRating('phys', 2, this)">2<br><span style="font-size:9px">방해</span></button>
+            <button class="rating-btn" onclick="setRating('phys', 3, this)">3<br><span style="font-size:9px">중립</span></button>
+            <button class="rating-btn" onclick="setRating('phys', 4, this)">4<br><span style="font-size:9px">촉진</span></button>
+            <button class="rating-btn" onclick="setRating('phys', 5, this)">5<br><span style="font-size:9px">매우 촉진</span></button>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>물리적 환경 관찰 메모</label>
+            <textarea id="phys-note" placeholder="교실 배치, 감각 환경의 특이 사항, 아동 좌석 위치, 전환 경로 등을 자유롭게 기록합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>환경 수정 제안 (물리적)</label>
+            <textarea id="phys-suggest" placeholder="예: 소음 감소를 위한 이어머프 제공, 시각적 일정표 게시, 전환 전 2분 준비 공간 확보 등"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사회적 환경 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-env">👥</div>
+          <div>
+            <div class="card-title">사회적 환경 (Social Environment)</div>
+            <div class="card-subtitle">교사 상호작용, 또래 관계, 지원 체계</div>
+          </div>
+        </div>
+
+        <div class="section-sub-title">사회적 환경 특성 체크</div>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>교사 일관성 부족</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>보조인력 없음</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>또래 갈등 빈번</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>교사 긍정 지원</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>지시 방식 불명확</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>또래 모델 존재</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>가정-학교 연계 약함</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>팀 접근 이루어짐</label>
+        </div>
+
+        <hr class="section-divider">
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">사회적 환경의 행동 지원 수준</span>
+            <span class="rating-value" id="social-val">-</span>
+          </div>
+          <div class="rating-track" id="social-rating">
+            <button class="rating-btn" onclick="setRating('social', 1, this)">1</button>
+            <button class="rating-btn" onclick="setRating('social', 2, this)">2</button>
+            <button class="rating-btn" onclick="setRating('social', 3, this)">3</button>
+            <button class="rating-btn" onclick="setRating('social', 4, this)">4</button>
+            <button class="rating-btn" onclick="setRating('social', 5, this)">5</button>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>주요 지원 인물</label>
+            <input type="text" id="key-supporter" placeholder="예: 특수교사, 담임교사, 보조교사">
+          </div>
+          <div class="field-group">
+            <label>교사-아동 신뢰 관계</label>
+            <select id="teacher-trust">
+              <option value="">선택</option>
+              <option>매우 긍정적</option>
+              <option>긍정적</option>
+              <option>중립</option>
+              <option>갈등적</option>
+              <option>파악 불가</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>사회적 환경 관찰 메모</label>
+            <textarea id="social-note" placeholder="교사의 지시 방식, 또래 상호작용 패턴, 집단 내 아동의 역할 등을 기술합니다."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 제도·문화적 환경 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-env">📜</div>
+          <div>
+            <div class="card-title">제도·문화적 환경 (Institutional & Cultural)</div>
+            <div class="card-subtitle">학교 정책, 일과 구조, 문화적 맥락</div>
+          </div>
+        </div>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>일과 예측 불가</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>전환 알림 없음</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>행동 규칙 불명확</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>PBS 이해 낮음</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>개별 지원 계획 있음</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>팀 협력 체계 있음</label>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>학교 일과 구조 특이 사항</label>
+            <textarea id="inst-note" placeholder="수업 시간 구성, 쉬는 시간 활용, 특별 활동 일정 등 행동에 영향 미치는 제도적 요인을 기술합니다."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="switchPage('client', document.querySelectorAll('.tab-btn')[0])">← 이전</button>
+        <button class="btn-primary" onclick="switchPage('occupation', document.querySelectorAll('.tab-btn')[2])">다음: 작업 분석 →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 3: 작업 분석 ══ -->
+    <div class="page" id="page-occupation">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 3 · Occupation</div>
+        <h1 class="page-title">작업 프로파일 분석</h1>
+        <p class="page-desc">PEO 모델의 Occupation 요소 — 아동이 수행해야 하는 역할과 작업의 특성을 분석하고, 행동 도전이 발생하는 작업 맥락을 파악합니다.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-occ">🎯</div>
+          <div>
+            <div class="card-title">작업 역할 및 수행 맥락</div>
+            <div class="card-subtitle">Occupational profile — OTIPM 기반</div>
+          </div>
+        </div>
+
+        <div class="section-sub-title">주요 작업 영역 (행동 도전 발생 맥락)</div>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>교과 수업 참여</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>착석 및 집중 유지</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>전환 활동</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>또래 상호작용</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>급식/식사</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>화장실 사용</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>자기관리 (옷 입기 등)</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>지시 따르기</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>그룹 활동</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>대기/여가</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>이동 (복도, 계단)</label>
+          <label class="check-item"><input type="checkbox"><span class="check-icon">✓</span>치료 참여</label>
+        </div>
+
+        <hr class="section-divider">
+        <div class="section-sub-title">작업 수행 질 분석 (OTIPM 관점)</div>
+
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">작업 수행의 효율성</span>
+            <span class="rating-value" id="eff-val">-</span>
+          </div>
+          <div class="rating-track">
+            <button class="rating-btn" onclick="setRating('eff', 1, this)">1</button>
+            <button class="rating-btn" onclick="setRating('eff', 2, this)">2</button>
+            <button class="rating-btn" onclick="setRating('eff', 3, this)">3</button>
+            <button class="rating-btn" onclick="setRating('eff', 4, this)">4</button>
+            <button class="rating-btn" onclick="setRating('eff', 5, this)">5</button>
+          </div>
+          <div class="rating-desc"><span>매우 비효율적</span><span>매우 효율적</span></div>
+        </div>
+
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">작업 수행의 독립성</span>
+            <span class="rating-value" id="ind-val">-</span>
+          </div>
+          <div class="rating-track">
+            <button class="rating-btn" onclick="setRating('ind', 1, this)">1</button>
+            <button class="rating-btn" onclick="setRating('ind', 2, this)">2</button>
+            <button class="rating-btn" onclick="setRating('ind', 3, this)">3</button>
+            <button class="rating-btn" onclick="setRating('ind', 4, this)">4</button>
+            <button class="rating-btn" onclick="setRating('ind', 5, this)">5</button>
+          </div>
+          <div class="rating-desc"><span>전적 의존</span><span>완전 독립</span></div>
+        </div>
+
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">작업 수행 시 안전성</span>
+            <span class="rating-value" id="safe-val">-</span>
+          </div>
+          <div class="rating-track">
+            <button class="rating-btn" onclick="setRating('safe', 1, this)">1</button>
+            <button class="rating-btn" onclick="setRating('safe', 2, this)">2</button>
+            <button class="rating-btn" onclick="setRating('safe', 3, this)">3</button>
+            <button class="rating-btn" onclick="setRating('safe', 4, this)">4</button>
+            <button class="rating-btn" onclick="setRating('safe', 5, this)">5</button>
+          </div>
+          <div class="rating-desc"><span>위험</span><span>안전</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-occ">🔍</div>
+          <div>
+            <div class="card-title">행동의 기능 분석 (초기)</div>
+            <div class="card-subtitle">ABC 분석 — 선행사건·행동·결과</div>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>주요 선행사건 (Antecedent) — 행동 발생 직전 상황</label>
+            <textarea id="antecedent" placeholder="예: 활동 전환 지시, 어려운 과제 제시, 선호 활동 종료, 대기 요구 등"></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>행동 (Behavior) — 구체적 도전 행동</label>
+            <textarea id="behavior-desc" placeholder="행동의 형태, 강도, 지속 시간, 빈도를 객관적으로 기술합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>결과 (Consequence) — 환경의 반응</label>
+            <textarea id="consequence" placeholder="예: 교사가 과제 철회, 또래 반응, 장소 이동 등 행동 후 발생하는 환경 변화를 기술합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>추정 행동 기능</label>
+            <select id="behavior-function">
+              <option value="">선택</option>
+              <option>주의 획득</option>
+              <option>요구/선호 획득</option>
+              <option>회피/탈출</option>
+              <option>감각 추구</option>
+              <option>감각 회피</option>
+              <option>자기 자극</option>
+              <option>복합적/불명확</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>행동 기능 확신도</label>
+            <select id="function-confidence">
+              <option value="">선택</option>
+              <option>높음 (명확)</option>
+              <option>중간 (추정)</option>
+              <option>낮음 (추가 평가 필요)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="switchPage('environment', document.querySelectorAll('.tab-btn')[1])">← 이전</button>
+        <button class="btn-primary" onclick="switchPage('fit', document.querySelectorAll('.tab-btn')[3])">다음: PEO 적합성 →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 4: PEO 적합성 ══ -->
+    <div class="page" id="page-fit">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 4 · PEO Fit</div>
+        <h1 class="page-title">PEO 적합성 평가</h1>
+        <p class="page-desc">Person-Environment-Occupation 세 요소의 상호작용과 적합성(fit)을 종합적으로 평가합니다. 적합성이 낮을수록 작업 수행 어려움과 행동 도전이 증가합니다.</p>
+      </div>
+
+      <div class="peo-matrix">
+        <div class="peo-card person">
+          <div class="peo-card-label">Person</div>
+          <div class="peo-card-value" id="person-score">–</div>
+          <div class="peo-card-desc">감각·인지·행동 특성</div>
+        </div>
+        <div class="peo-card env">
+          <div class="peo-card-label">Environment</div>
+          <div class="peo-card-value" id="env-score">–</div>
+          <div class="peo-card-desc">물리·사회·제도 환경</div>
+        </div>
+        <div class="peo-card occ">
+          <div class="peo-card-label">Occupation</div>
+          <div class="peo-card-value" id="occ-score">–</div>
+          <div class="peo-card-desc">작업 수행 맥락·질</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-fit">⚖️</div>
+          <div>
+            <div class="card-title">P-E 적합성 평가</div>
+            <div class="card-subtitle">Person과 Environment의 조화 수준</div>
+          </div>
+        </div>
+
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">현재 P-E 적합성 (Person ↔ Environment)</span>
+            <span class="rating-value" id="pe-val">-</span>
+          </div>
+          <div class="rating-track">
+            <button class="rating-btn" onclick="setRating('pe', 1, this)">1<br><span style="font-size:9px">매우 낮음</span></button>
+            <button class="rating-btn" onclick="setRating('pe', 2, this)">2<br><span style="font-size:9px">낮음</span></button>
+            <button class="rating-btn" onclick="setRating('pe', 3, this)">3<br><span style="font-size:9px">보통</span></button>
+            <button class="rating-btn" onclick="setRating('pe', 4, this)">4<br><span style="font-size:9px">높음</span></button>
+            <button class="rating-btn" onclick="setRating('pe', 5, this)">5<br><span style="font-size:9px">매우 높음</span></button>
+          </div>
+        </div>
+
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">현재 P-O 적합성 (Person ↔ Occupation)</span>
+            <span class="rating-value" id="po-val">-</span>
+          </div>
+          <div class="rating-track">
+            <button class="rating-btn" onclick="setRating('po', 1, this)">1</button>
+            <button class="rating-btn" onclick="setRating('po', 2, this)">2</button>
+            <button class="rating-btn" onclick="setRating('po', 3, this)">3</button>
+            <button class="rating-btn" onclick="setRating('po', 4, this)">4</button>
+            <button class="rating-btn" onclick="setRating('po', 5, this)">5</button>
+          </div>
+        </div>
+
+        <div class="rating-group">
+          <div class="rating-label-row">
+            <span class="rating-label">현재 E-O 적합성 (Environment ↔ Occupation)</span>
+            <span class="rating-value" id="eo-val">-</span>
+          </div>
+          <div class="rating-track">
+            <button class="rating-btn" onclick="setRating('eo', 1, this)">1</button>
+            <button class="rating-btn" onclick="setRating('eo', 2, this)">2</button>
+            <button class="rating-btn" onclick="setRating('eo', 3, this)">3</button>
+            <button class="rating-btn" onclick="setRating('eo', 4, this)">4</button>
+            <button class="rating-btn" onclick="setRating('eo', 5, this)">5</button>
+          </div>
+        </div>
+
+        <hr class="section-divider">
+        <div class="section-sub-title">전반적 PEO 적합성 지수</div>
+        <div class="fit-bar-wrap">
+          <div class="fit-bar-label-row">
+            <span style="font-size:13px;font-family:var(--font-ui);font-weight:600;color:var(--text-secondary)">종합 Fit 점수</span>
+            <span style="font-size:16px;font-family:var(--font-ui);font-weight:700;color:var(--teal-600)" id="total-fit">–</span>
+          </div>
+          <div class="fit-bar-track">
+            <div class="fit-bar-fill" id="fit-bar" style="width:0%"></div>
+          </div>
+          <div class="rating-desc"><span>낮은 적합성 (행동 도전 위험↑)</span><span>높은 적합성 (참여 촉진)</span></div>
+        </div>
+
+        <div class="field-row full">
+          <div class="field-group">
+            <label>PEO 적합성 해석 메모</label>
+            <textarea id="fit-note" placeholder="어느 요소 간 fit이 가장 낮은지, 환경 수정을 통해 가장 빠르게 개선할 수 있는 영역은 무엇인지 기술합니다."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-fit">🎯</div>
+          <div>
+            <div class="card-title">환경 수정 우선순위</div>
+            <div class="card-subtitle">PEO fit 향상을 위한 중재 방향</div>
+          </div>
+        </div>
+        <table class="priority-table">
+          <thead>
+            <tr>
+              <th style="width:18%">우선순위</th>
+              <th style="width:27%">환경 영역</th>
+              <th>구체적 수정 방안</th>
+              <th style="width:18%">예상 효과</th>
+            </tr>
+          </thead>
+          <tbody id="priority-tbody">
+            <tr>
+              <td><select style="width:100%;font-size:12px;padding:4px 6px"><option>1순위</option><option>2순위</option><option>3순위</option></select></td>
+              <td><input type="text" placeholder="예: 물리적 환경" style="width:100%;font-size:12px;padding:4px 6px"></td>
+              <td><input type="text" placeholder="구체적 내용 입력" style="width:100%;font-size:12px;padding:4px 6px"></td>
+              <td><select style="width:100%;font-size:12px;padding:4px 6px"><option>높음</option><option>중간</option><option>낮음</option></select></td>
+            </tr>
+            <tr>
+              <td><select style="width:100%;font-size:12px;padding:4px 6px"><option>1순위</option><option>2순위</option><option>3순위</option></select></td>
+              <td><input type="text" placeholder="예: 사회적 환경" style="width:100%;font-size:12px;padding:4px 6px"></td>
+              <td><input type="text" placeholder="구체적 내용 입력" style="width:100%;font-size:12px;padding:4px 6px"></td>
+              <td><select style="width:100%;font-size:12px;padding:4px 6px"><option>높음</option><option>중간</option><option>낮음</option></select></td>
+            </tr>
+            <tr>
+              <td><select style="width:100%;font-size:12px;padding:4px 6px"><option>1순위</option><option>2순위</option><option>3순위</option></select></td>
+              <td><input type="text" placeholder="예: 제도적 환경" style="width:100%;font-size:12px;padding:4px 6px"></td>
+              <td><input type="text" placeholder="구체적 내용 입력" style="width:100%;font-size:12px;padding:4px 6px"></td>
+              <td><select style="width:100%;font-size:12px;padding:4px 6px"><option>높음</option><option>중간</option><option>낮음</option></select></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="switchPage('occupation', document.querySelectorAll('.tab-btn')[2])">← 이전</button>
+        <button class="btn-primary" onclick="goSummary()">다음: 분석 요약 →</button>
+      </div>
+    </div>
+
+    <!-- ══ PAGE 5: 분석 요약 ══ -->
+    <div class="page" id="page-summary">
+      <div class="page-header">
+        <div class="page-eyebrow">Step 5 · Summary</div>
+        <h1 class="page-title">분석 요약 및 컨설팅 제언</h1>
+        <p class="page-desc">초기 평가 결과를 종합하여 PBS 팀에 제공할 OT 자문 내용을 정리합니다. OTIPM의 Finalize Evaluation 단계에 해당합니다.</p>
+      </div>
+
+      <div class="summary-grid" id="summary-stats">
+        <div class="summary-stat">
+          <div class="summary-stat-label">P-E 적합성</div>
+          <div class="summary-stat-value" id="sum-pe">–</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">P-O 적합성</div>
+          <div class="summary-stat-value" id="sum-po">–</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">E-O 적합성</div>
+          <div class="summary-stat-value" id="sum-eo">–</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">종합 Fit 지수</div>
+          <div class="summary-stat-value" id="sum-total">–</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-obs">📝</div>
+          <div>
+            <div class="card-title">OT 자문 요약 서술</div>
+            <div class="card-subtitle">PBS 팀 제공용 — 환경 중심 분석</div>
+          </div>
+        </div>
+
+        <div class="field-row full">
+          <div class="field-group">
+            <label>환경 분석 요약 (3~5문장)</label>
+            <textarea class="tall" id="env-summary" placeholder="현재 아동의 환경 특성 중 행동 도전에 기여하는 핵심 요인을 PEO 관점에서 요약합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>작업치료 관점의 행동 해석</label>
+            <textarea class="tall" id="ot-interpretation" placeholder="도전 행동이 아동의 감각처리, 작업 수행 기술, 환경-작업 불일치와 어떻게 연결되는지 작업치료 관점에서 해석합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>핵심 환경 중재 제언 (PBS 팀 대상)</label>
+            <textarea class="tall" id="ot-recommendation" placeholder="우선적으로 수정이 필요한 환경 요인과 구체적인 전략을 제안합니다. 즉각 실행 가능한 것부터 순서대로 제시합니다."></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>추가 평가 필요 영역</label>
+            <textarea id="further-eval" placeholder="예: 감각 처리 공식 평가(SPM), 작업 수행 관찰 평가(AMPS), 보호자 인터뷰 심층 진행 등"></textarea>
+          </div>
+        </div>
+        <div class="field-row full">
+          <div class="field-group">
+            <label>다음 방문 계획 / 후속 조치</label>
+            <textarea id="follow-up" placeholder="다음 평가 일정, 관찰 계획, 팀 미팅 등을 기록합니다."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon icon-obs">✅</div>
+          <div>
+            <div class="card-title">평가자 서명</div>
+            <div class="card-subtitle">Evaluator information</div>
+          </div>
+        </div>
+        <div class="field-row triple">
+          <div class="field-group">
+            <label>평가자 이름</label>
+            <input type="text" id="evaluator-name" placeholder="성명">
+          </div>
+          <div class="field-group">
+            <label>자격</label>
+            <input type="text" id="evaluator-cred" value="작업치료사 (OT)">
+          </div>
+          <div class="field-group">
+            <label>평가 완료일</label>
+            <input type="date" id="complete-date">
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="switchPage('fit', document.querySelectorAll('.tab-btn')[3])">← 이전</button>
+        <button class="btn-secondary" onclick="window.print()">🖨️ 인쇄 / PDF</button>
+        <button class="btn-primary" onclick="saveData()">💾 데이터 저장</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const ratings = {};
+
+function switchPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  const map = {client:'아동 기초',environment:'환경 요인',occupation:'작업 프로',fit:'PEO 적합',summary:'분석 요약'};
+  document.querySelectorAll('.sidebar-item').forEach(s => {
+    if (s.textContent.includes(map[id] || '')) s.classList.add('active');
+  });
+}
+
+function switchPageSide(id, el) {
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabMap = {client:0,environment:1,occupation:2,fit:3,summary:4};
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn')[tabMap[id]].classList.add('active');
+}
+
+function setRating(key, val, btn) {
+  ratings[key] = val;
+  const container = btn.parentElement;
+  container.querySelectorAll('.rating-btn').forEach((b, i) => {
+    b.className = 'rating-btn';
+    if (i + 1 === val) b.classList.add('sel-' + val);
+  });
+  const valEl = document.getElementById(key + '-val');
+  if (valEl) valEl.textContent = val + '/5';
+  updateFitScore();
+  syncSummary();
+}
+
+function updateFitScore() {
+  const pe = ratings['pe'] || 0;
+  const po = ratings['po'] || 0;
+  const eo = ratings['eo'] || 0;
+  if (pe && po && eo) {
+    const total = ((pe + po + eo) / 3).toFixed(1);
+    document.getElementById('total-fit').textContent = total + ' / 5';
+    document.getElementById('fit-bar').style.width = (((pe+po+eo)/3)/5*100) + '%';
+  }
+  // Update PEO cards with env average
+  const phys = ratings['phys'] || 0;
+  const social = ratings['social'] || 0;
+  if (phys || social) {
+    const envAvg = phys && social ? ((phys+social)/2).toFixed(1) : (phys || social);
+    document.getElementById('env-score').textContent = envAvg;
+  }
+  const eff = ratings['eff'] || 0;
+  const ind = ratings['ind'] || 0;
+  const safe = ratings['safe'] || 0;
+  const occCount = [eff, ind, safe].filter(v => v > 0).length;
+  if (occCount > 0) {
+    const occAvg = ((eff + ind + safe) / occCount).toFixed(1);
+    document.getElementById('occ-score').textContent = occAvg;
+  }
+  if (pe) document.getElementById('person-score').textContent = pe;
+}
+
+function syncSummary() {
+  const pe = ratings['pe'];
+  const po = ratings['po'];
+  const eo = ratings['eo'];
+  if (pe) document.getElementById('sum-pe').textContent = pe + ' / 5';
+  if (po) document.getElementById('sum-po').textContent = po + ' / 5';
+  if (eo) document.getElementById('sum-eo').textContent = eo + ' / 5';
+  if (pe && po && eo) {
+    const total = ((pe+po+eo)/3).toFixed(1);
+    document.getElementById('sum-total').textContent = total + ' / 5';
+  }
+}
+
+function goSummary() {
+  syncSummary();
+  switchPage('summary', document.querySelectorAll('.tab-btn')[4]);
+}
+
+// Checkbox toggle
+document.querySelectorAll('.check-item').forEach(item => {
+  item.addEventListener('click', function() {
+    this.classList.toggle('checked');
+    const cb = this.querySelector('input[type="checkbox"]');
+    if (cb) cb.checked = !cb.checked;
+  });
+});
+
+// ── 현재 폼 데이터 수집 ──────────────────────────────────────
+function collectFormData() {
+  const checkedStrengths = [];
+  document.querySelectorAll('#strengths-grid .check-item.checked').forEach(el => {
+    checkedStrengths.push(el.textContent.trim());
+  });
+  return {
+    timestamp: new Date().toLocaleString('ko-KR'),
+    child: {
+      name:      document.getElementById('child-name')?.value || '',
+      dob:       document.getElementById('child-dob')?.value || '',
+      grade:     document.getElementById('child-grade')?.value || '',
+      diagnosis: document.getElementById('diagnosis')?.value || '',
+      placement: document.getElementById('placement')?.value || '',
+    },
+    referral: {
+      background:     document.getElementById('referral-bg')?.value || '',
+      targetBehavior: document.getElementById('target-behavior')?.value || '',
+      time:           document.getElementById('behavior-time')?.value || '',
+      place:          document.getElementById('behavior-place')?.value || '',
+    },
+    strengths: {
+      checked: checkedStrengths,
+      note:    document.getElementById('strengths-note')?.value || '',
+    },
+    environment: {
+      physRating:   ratings['phys'],
+      physNote:     document.getElementById('phys-note')?.value || '',
+      physSuggest:  document.getElementById('phys-suggest')?.value || '',
+      socialRating: ratings['social'],
+      socialNote:   document.getElementById('social-note')?.value || '',
+      keySupporter: document.getElementById('key-supporter')?.value || '',
+      teacherTrust: document.getElementById('teacher-trust')?.value || '',
+      instNote:     document.getElementById('inst-note')?.value || '',
+    },
+    occupation: {
+      antecedent:         document.getElementById('antecedent')?.value || '',
+      behavior:           document.getElementById('behavior-desc')?.value || '',
+      consequence:        document.getElementById('consequence')?.value || '',
+      function:           document.getElementById('behavior-function')?.value || '',
+      functionConfidence: document.getElementById('function-confidence')?.value || '',
+    },
+    peoFit: {
+      pe:      ratings['pe'],
+      po:      ratings['po'],
+      eo:      ratings['eo'],
+      fitNote: document.getElementById('fit-note')?.value || '',
+    },
+    summary: {
+      envSummary:     document.getElementById('env-summary')?.value || '',
+      interpretation: document.getElementById('ot-interpretation')?.value || '',
+      recommendation: document.getElementById('ot-recommendation')?.value || '',
+      furtherEval:    document.getElementById('further-eval')?.value || '',
+      followUp:       document.getElementById('follow-up')?.value || '',
+      evaluatorName:  document.getElementById('evaluator-name')?.value || '',
+      evaluatorCred:  document.getElementById('evaluator-cred')?.value || '',
+    },
+  };
+}
+
+// ── JSON 로컬 저장 ───────────────────────────────────────────
+function saveData() {
+  const data = collectFormData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const name = data.child.name || 'unknown';
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `PBS-PEO-평가_${name}_${date}.json`;
+  a.click();
+  showToast('✅ JSON 저장 완료: ' + a.download);
+}
+
+// ── GAS 연동 ─────────────────────────────────────────────────
+let GAS_URL = localStorage.getItem('pbs_gas_url') || '';
+
+function openGasPanel() {
+  document.getElementById('gas-url-input').value = GAS_URL;
+  document.getElementById('gas-test-result').textContent = '';
+  const panel = document.getElementById('gas-panel');
+  panel.style.display = 'flex';
+}
+function closeGasPanel() {
+  document.getElementById('gas-panel').style.display = 'none';
+}
+function saveGasUrl() {
+  const url = document.getElementById('gas-url-input').value.trim();
+  GAS_URL = url;
+  localStorage.setItem('pbs_gas_url', url);
+  document.getElementById('dot-gas').style.background = url ? 'var(--teal-400)' : 'var(--amber-400)';
+  closeGasPanel();
+  showToast(url ? '✅ GAS URL 저장됨' : '⚠️ URL이 비어있습니다');
+}
+
+async function testGasConnection() {
+  const url = document.getElementById('gas-url-input').value.trim();
+  const res = document.getElementById('gas-test-result');
+  if (!url) { res.textContent = '❌ URL을 먼저 입력하세요.'; res.style.color = '#dc2626'; return; }
+  res.textContent = '🔄 연결 테스트 중...'; res.style.color = 'var(--text-muted)';
+  try {
+    const r = await fetch(url + '?action=ping');
+    const j = await r.json();
+    if (j.status === 'ok') {
+      res.textContent = '✅ 연결 성공: ' + j.message;
+      res.style.color = 'var(--teal-600)';
+    } else {
+      res.textContent = '⚠️ 응답 오류: ' + JSON.stringify(j);
+      res.style.color = '#d97706';
+    }
+  } catch(e) {
+    res.textContent = '❌ 연결 실패: ' + e.message;
+    res.style.color = '#dc2626';
+  }
+}
+
+async function syncToSheets() {
+  if (!GAS_URL) {
+    openGasPanel();
+    showToast('⚙️ GAS URL을 먼저 설정해주세요');
+    return;
+  }
+  const btn = document.getElementById('sheets-btn');
+  btn.textContent = '⏳ 저장 중...';
+  btn.disabled = true;
+
+  const data = collectFormData();
+  if (!data.child.name) {
+    showToast('⚠️ 아동 이름(이니셜)을 먼저 입력해주세요');
+    btn.textContent = '📊 시트 저장'; btn.disabled = false; return;
+  }
+
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' }, // GAS CORS 우회
+      body: JSON.stringify({ action: 'save', data }),
+    });
+    const json = await resp.json();
+    if (json.status === 'ok') {
+      showToast('✅ 구글 시트 저장 완료 — ' + (data.child.name || '') + ' ' + data.timestamp);
+      document.getElementById('dot-gas').style.background = 'var(--teal-400)';
+    } else {
+      showToast('❌ 저장 실패: ' + (json.message || JSON.stringify(json)));
+    }
+  } catch(e) {
+    showToast('❌ 네트워크 오류: ' + e.message);
+  }
+  btn.textContent = '📊 시트 저장'; btn.disabled = false;
+}
+
+// ── 기록 불러오기 ────────────────────────────────────────────
+async function showLoadPanel() {
+  const panel = document.getElementById('load-panel');
+  const list  = document.getElementById('load-records-list');
+  panel.style.display = 'flex';
+  if (!GAS_URL) {
+    list.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">GAS URL을 먼저 설정해주세요.</div>';
+    return;
+  }
+  list.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">🔄 목록 불러오는 중...</div>';
+  try {
+    const r = await fetch(GAS_URL + '?action=list');
+    const j = await r.json();
+    if (j.status === 'ok' && j.records.length > 0) {
+      list.innerHTML = j.records.map(rec =>
+        `<div onclick="loadRecord('${rec.name}')" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .15s;"
+          onmouseover="this.style.background='var(--teal-50)'" onmouseout="this.style.background=''">
+          <span style="font-weight:600;">${rec.name}</span>
+          <span style="color:var(--text-muted);font-size:12px;">${rec.date || ''}</span>
+        </div>`
+      ).join('');
+    } else {
+      list.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">저장된 기록이 없습니다.</div>';
+    }
+  } catch(e) {
+    list.innerHTML = '<div style="color:#dc2626;text-align:center;padding:20px;">불러오기 실패: ' + e.message + '</div>';
+  }
+}
+function closeLoadPanel() {
+  document.getElementById('load-panel').style.display = 'none';
+}
+
+async function loadRecord(name) {
+  closeLoadPanel();
+  if (!GAS_URL) return;
+  showToast('🔄 기록 불러오는 중...');
+  try {
+    const r = await fetch(GAS_URL + '?action=load&name=' + encodeURIComponent(name));
+    const j = await r.json();
+    if (j.status === 'ok') {
+      fillForm(j.record);
+      showToast('✅ ' + name + ' 기록 불러오기 완료');
+    } else {
+      showToast('❌ ' + (j.message || '불러오기 실패'));
+    }
+  } catch(e) {
+    showToast('❌ 오류: ' + e.message);
+  }
+}
+
+function fillForm(rec) {
+  const m = {
+    'child-name':        rec['이름(이니셜)'],
+    'child-dob':         rec['생년월일'],
+    'child-grade':       rec['학년'],
+    'placement':         rec['배치유형'],
+    'diagnosis':         rec['진단명'],
+    'referral-bg':       rec['의뢰배경'],
+    'target-behavior':   rec['주요행동'],
+    'behavior-time':     rec['행동발생시간'],
+    'behavior-place':    rec['행동발생장소'],
+    'env-summary':       rec['OT자문요약'],
+    'ot-interpretation': rec['OT행동해석'],
+    'ot-recommendation': rec['OT제언'],
+    'further-eval':      rec['추가평가필요'],
+    'follow-up':         rec['후속조치'],
+    'evaluator-name':    rec['평가자'],
+    'evaluator-cred':    rec['자격'],
+  };
+  Object.entries(m).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val) el.value = val;
+  });
+  // Fit 점수 복원
+  ['pe','po','eo'].forEach(key => {
+    const colMap = { pe:'P-E Fit', po:'P-O Fit', eo:'E-O Fit' };
+    const val = parseInt(rec[colMap[key]]);
+    if (val) {
+      const btns = document.querySelectorAll(`#${key === 'pe' ? 'page-fit' : 'page-fit'} .rating-btn`);
+    }
+  });
+  syncSummary();
+}
+
+// ── 토스트 알림 ──────────────────────────────────────────────
+function showToast(msg, duration = 3200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    setTimeout(() => { t.style.display = 'none'; }, 300);
+  }, duration);
+}
+
+// ── 초기화 ───────────────────────────────────────────────────
+document.getElementById('eval-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('complete-date').value = new Date().toISOString().split('T')[0];
+
+// GAS URL 저장 여부에 따라 점 색상 초기화
+if (GAS_URL) {
+  document.getElementById('dot-gas').style.background = 'var(--teal-400)';
+}
+</script>
+</body>
+</html>
